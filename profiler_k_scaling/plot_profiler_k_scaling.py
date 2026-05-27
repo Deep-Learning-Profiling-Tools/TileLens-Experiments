@@ -34,6 +34,6 @@ print_table(labels, means, mins, maxs)
 plot_ablation_chart(
     labels, means, mins, maxs,
     'profiler_k_scaling.pdf',
-    xlim=(0.75, 1000),
+    xlim=(0.5, 1400),
     xticks=[1, 10, 100, 1000]
 )

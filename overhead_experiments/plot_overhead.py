@@ -29,7 +29,7 @@ plt.rcParams.update({
     'grid.linewidth': 1.0,
     'grid.linestyle': '--',
     'grid.color': '#aaaaaa',
-    'figure.figsize': (12, 5.5),
+    'figure.figsize': (10, 5.5),
     'figure.autolayout': True,
 })
 
@@ -76,10 +76,14 @@ def plot_overhead_cdf(csv_path, output_pdf, title_suffix="", x_min_limit=None, x
     print(f"Processing: {csv_path.name}")
     print(f"{'=' * 60}")
     print(f"Loaded {len(df)} workloads")
-    print(f"| {'Tool':<12} | {'Overhead':<30} |")
-    print(f"|{'-'*14}|{'-'*32}|")
-    print(f"| {'Sanitizer':<12} | {sanitizer_overhead.mean():.2f}x ({sanitizer_overhead.min():.2f}x–{sanitizer_overhead.max():.2f}x) |")
-    print(f"| {'Profiler':<12} | {profiler_overhead.mean():.2f}x ({profiler_overhead.min():.2f}x–{profiler_overhead.max():.2f}x) |")
+    print(f"| {'Tool':<12} | {'Median':<12} | {'90th Pctl':<12} | {'Range':<28} |")
+    print(f"|{'-'*14}|{'-'*14}|{'-'*14}|{'-'*30}|")
+    san_median = np.median(sanitizer_overhead)
+    san_p90 = np.percentile(sanitizer_overhead, 90)
+    pro_median = np.median(profiler_overhead)
+    pro_p90 = np.percentile(profiler_overhead, 90)
+    print(f"| {'Sanitizer':<12} | {san_median:<12.2f} | {san_p90:<12.2f} | {sanitizer_overhead.min():.2f}x–{sanitizer_overhead.max():.2f}x |")
+    print(f"| {'Profiler':<12} | {pro_median:<12.2f} | {pro_p90:<12.2f} | {profiler_overhead.min():.2f}x–{profiler_overhead.max():.2f}x |")
 
     # Calculate CDF
     san_x, san_y = calculate_cdf(sanitizer_overhead)
@@ -93,7 +97,7 @@ def plot_overhead_cdf(csv_path, output_pdf, title_suffix="", x_min_limit=None, x
     ax.plot(pro_x, pro_y, label='Profiler', color='#C41E3A', linestyle='--')
 
     # Add baseline reference line
-    ax.axvline(x=1.0, color='black', linestyle='-', linewidth=1.5, label='Baseline (1.0x)')
+    ax.axvline(x=1.0, color='black', linestyle='-', linewidth=1.5, label='1.0x')
 
     # Style adjustments
     ax.set_xlabel('Overhead', fontsize=42)
@@ -119,13 +123,52 @@ def plot_overhead_cdf(csv_path, output_pdf, title_suffix="", x_min_limit=None, x
     ax.set_yticklabels(['0%', '20%', '40%', '60%', '80%', '100%'])
 
     ax.grid(True)
-    ax.legend(loc='lower right', frameon=True, framealpha=0.9, edgecolor='gray', fontsize=32)
+    ax.legend(loc='lower right', frameon=True, framealpha=0.9, edgecolor='gray', fontsize=42)
 
     # Save to PDF
     plt.savefig(output_pdf, bbox_inches='tight')
     plt.close()
 
     print(f"Saved to: {output_pdf}")
+
+    # Generate separate PDFs for sanitizer and profiler
+    output_pdf_path = Path(output_pdf)
+    base_name = output_pdf_path.stem  # e.g., "e2e_time_overhead"
+
+    # Sanitizer plot
+    fig, ax = plt.subplots()
+    ax.plot(san_x, san_y, color='#005EB8', linestyle='-')
+    ax.axvline(x=1.0, color='black', linestyle='-', linewidth=1.5)
+    ax.set_xlabel('Overhead', fontsize=42)
+    ax.set_ylabel('CDF', fontsize=42)
+    ax.tick_params(axis='both', labelsize=39)
+    ax.set_ylim(-0.05, 1.05)
+    ax.set_xlim(x_min, sanitizer_overhead.max() * 1.1 if x_max_limit is None else x_max_limit)
+    ax.set_yticks([0, 0.2, 0.4, 0.6, 0.8, 1.0])
+    ax.set_yticklabels(['0%', '20%', '40%', '60%', '80%', '100%'])
+    ax.grid(True)
+    sanitizer_pdf = output_pdf_path.parent / f"{base_name}_sanitizer.pdf"
+    plt.savefig(sanitizer_pdf, bbox_inches='tight')
+    plt.close()
+    print(f"Saved to: {sanitizer_pdf}")
+
+    # Profiler plot
+    fig, ax = plt.subplots()
+    ax.plot(pro_x, pro_y, color='#C41E3A', linestyle='--')
+    ax.axvline(x=1.0, color='black', linestyle='-', linewidth=1.5)
+    ax.set_xlabel('Overhead', fontsize=42)
+    ax.set_ylabel('CDF', fontsize=42)
+    ax.tick_params(axis='both', labelsize=39)
+    ax.set_ylim(-0.05, 1.05)
+    ax.set_xlim(x_min, profiler_overhead.max() * 1.1 if x_max_limit is None else x_max_limit)
+    ax.set_yticks([0, 0.2, 0.4, 0.6, 0.8, 1.0])
+    ax.set_yticklabels(['0%', '20%', '40%', '60%', '80%', '100%'])
+    ax.grid(True)
+    profiler_pdf = output_pdf_path.parent / f"{base_name}_profiler.pdf"
+    plt.savefig(profiler_pdf, bbox_inches='tight')
+    plt.close()
+    print(f"Saved to: {profiler_pdf}")
+
     return True
 
 
@@ -180,7 +223,7 @@ def main():
             success_count += 1
 
     print(f"\n{'=' * 60}")
-    print(f"Generated {success_count}/{len(metrics)} PDF files")
+    print(f"Generated {success_count * 3}/{len(metrics) * 3} PDF files")
     print(f"{'=' * 60}")
 
     return 0 if success_count > 0 else 1

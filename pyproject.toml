@@ -10,7 +10,13 @@ dependencies = [
     "pandas",
     "torch == 2.9.1",
     "triton-viz",
+    "seaborn",
+    "tokenizers==0.21.1",
+    "transformers==4.51.3",
+    "brokenaxes",
+#    "liger_kernel",
 ]
 
 [tool.uv.sources]
 triton-viz = { path = "./submodules/triton-viz" }
+liger_kernel = { path = "./submodules/Liger-Kernel" }

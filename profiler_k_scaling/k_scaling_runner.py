@@ -87,14 +87,15 @@ def run_profiler_with_k(
     output_dir.mkdir(parents=True, exist_ok=True)
 
     # Environment variables for profiler
-    # Note: PROFILER_ENABLE_LOAD_STORE_SKIPPING is enabled by default
+    # Note: PROFILER_ENABLE_LOAD_STORE_SKIPPING is disabled to match ablation study baseline
     # K=0 means disable block sampling entirely
     env = os.environ.copy()
     env.update({
         "TRITON_INTERPRET": "1",
         "ENABLE_TIMING": "1",
+        "PROFILER_ENABLE_LOAD_STORE_SKIPPING": "0",
         "PROFILER_DISABLE_BUFFER_LOAD_CHECK": "1",
-        "SANITIZER_ENABLE_FAKE_TENSOR": "1"
+        "SANITIZER_ENABLE_FAKE_TENSOR": "0"
     })
 
     if k_value == 0:
@@ -320,11 +321,12 @@ Examples:
     # Print environment variables for each K value
     print(f"\nEnvironment Variables Configuration:")
     print(f"{'-' * 60}")
-    print(f"  (PROFILER_ENABLE_LOAD_STORE_SKIPPING is enabled by default)")
+    print(f"  (PROFILER_ENABLE_LOAD_STORE_SKIPPING is disabled to match ablation baseline)")
     for k in k_values:
         print(f"\n  K={k}:")
         print(f"    TRITON_INTERPRET=1")
         print(f"    ENABLE_TIMING=1")
+        print(f"    PROFILER_ENABLE_LOAD_STORE_SKIPPING=0")
         if k == 0:
             print(f"    PROFILER_ENABLE_BLOCK_SAMPLING=0  (disable block sampling)")
         else:

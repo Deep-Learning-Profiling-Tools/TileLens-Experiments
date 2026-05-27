@@ -26,7 +26,11 @@ from test_registry import (
     TRITONBENCH_DIR
 )
 
+# Test name prefixes to exclude
+EXCLUDED_TEST_PREFIXES = ["destindex_copy"]
+
 # Profiler configurations with different environment variables
+# Environment variables are aligned with k_scaling_runner.py for consistency
 PROFILER_CONFIGS = OrderedDict([
     ("both_enabled", {
         "name": "both_enabled",
@@ -36,7 +40,9 @@ PROFILER_CONFIGS = OrderedDict([
             "ENABLE_TIMING": "1",
             "PROFILER_ENABLE_LOAD_STORE_SKIPPING": "1",
             "PROFILER_ENABLE_BLOCK_SAMPLING": "1",
-            "PROFILER_DISABLE_BUFFER_LOAD_CHECK": "1"
+            "PROFILER_BLOCK_SAMPLING_K": "1",
+            "PROFILER_DISABLE_BUFFER_LOAD_CHECK": "1",
+            "SANITIZER_ENABLE_FAKE_TENSOR": "0"
         }
     }),
     ("only_load_store_skipping", {
@@ -47,18 +53,21 @@ PROFILER_CONFIGS = OrderedDict([
             "ENABLE_TIMING": "1",
             "PROFILER_ENABLE_LOAD_STORE_SKIPPING": "1",
             "PROFILER_ENABLE_BLOCK_SAMPLING": "0",
-            "PROFILER_DISABLE_BUFFER_LOAD_CHECK": "1"
+            "PROFILER_DISABLE_BUFFER_LOAD_CHECK": "1",
+            "SANITIZER_ENABLE_FAKE_TENSOR": "0"
         }
     }),
     ("only_block_sampling", {
         "name": "only_block_sampling",
-        "description": "Only block sampling enabled, load/store skipping disabled",
+        "description": "Only block sampling enabled (K=1), load/store skipping disabled",
         "env": {
             "TRITON_INTERPRET": "1",
             "ENABLE_TIMING": "1",
             "PROFILER_ENABLE_LOAD_STORE_SKIPPING": "0",
             "PROFILER_ENABLE_BLOCK_SAMPLING": "1",
-            "PROFILER_DISABLE_BUFFER_LOAD_CHECK": "1"
+            "PROFILER_BLOCK_SAMPLING_K": "1",
+            "PROFILER_DISABLE_BUFFER_LOAD_CHECK": "1",
+            "SANITIZER_ENABLE_FAKE_TENSOR": "0"
         }
     }),
     ("both_disabled", {
@@ -69,7 +78,8 @@ PROFILER_CONFIGS = OrderedDict([
             "ENABLE_TIMING": "1",
             "PROFILER_ENABLE_LOAD_STORE_SKIPPING": "0",
             "PROFILER_ENABLE_BLOCK_SAMPLING": "0",
-            "PROFILER_DISABLE_BUFFER_LOAD_CHECK": "1"
+            "PROFILER_DISABLE_BUFFER_LOAD_CHECK": "1",
+            "SANITIZER_ENABLE_FAKE_TENSOR": "0"
         }
     })
 ])
@@ -235,6 +245,12 @@ Examples:
     if not tests:
         print("No tests to process")
         return 1
+
+    # Filter out excluded tests
+    original_count = len(tests)
+    tests = [t for t in tests if not any(t["name"].startswith(prefix) for prefix in EXCLUDED_TEST_PREFIXES)]
+    if len(tests) < original_count:
+        print(f"Excluded {original_count - len(tests)} tests matching prefixes: {EXCLUDED_TEST_PREFIXES}")
 
     # Determine configurations to run
     if "all" in args.configs:

@@ -35,7 +35,7 @@ def plot_ablation_chart(labels, means, mins, maxs, output_file, xlim=(0.35, 2000
         'axes.labelsize': 36,
         'xtick.labelsize': 33,
         'ytick.labelsize': 36,
-        'figure.figsize': (10, 4)
+        'figure.figsize': (10, 6)
     })
 
     # ==========================================
@@ -43,7 +43,7 @@ def plot_ablation_chart(labels, means, mins, maxs, output_file, xlim=(0.35, 2000
     # ==========================================
     fig, ax = plt.subplots()
 
-    bars = ax.barh(labels, means - 1, left=1, color='gray', edgecolor='black', height=0.6,
+    bars = ax.barh(labels, means - 1, left=1, color='gray', edgecolor='black', height=0.5,
                    xerr=xerr, capsize=6,
                    error_kw={'ecolor': 'black', 'elinewidth': 1.5})
 
@@ -75,17 +75,18 @@ def plot_ablation_chart(labels, means, mins, maxs, output_file, xlim=(0.35, 2000
         ax.text(means[i] * 1.05, i, f"{means[i]:.2f}x",
                 va='center', fontsize=28, fontweight='normal')
 
-        ax.text(mins[i], i - 0.35, f"{mins[i]:.2f}",
-                ha='center', va='top', fontsize=26)
+        ax.text(mins[i], i - 0.28, f"{mins[i]:.2f}",
+                ha='center', va='top', fontsize=32)
 
-        ax.text(maxs[i], i - 0.35, f"{maxs[i]:.2f}",
-                ha='center', va='top', fontsize=26)
+        ax.text(maxs[i], i - 0.28, f"{maxs[i]:.2f}",
+                ha='center', va='top', fontsize=32)
 
     plt.tight_layout()
     plt.subplots_adjust(bottom=0.15)
 
     plt.savefig(output_file, bbox_inches='tight')
     plt.close()
+    print(f"Saved to {output_file}")
 
 
 def print_table(labels, means, mins, maxs):
